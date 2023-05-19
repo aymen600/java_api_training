@@ -8,11 +8,18 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.io.BufferedReader;
+import java.util.concurrent.TimeUnit;
 
 public class Launcher {
     public static void main(String[] args) throws IOException {
@@ -80,11 +87,51 @@ public class Launcher {
         }
 
         //représente la logique de traitement de la requête. Dans cet exemple, on utilise une implémentation factice qui renvoie une réponse JSON fixe.
-        private String processGameStartRequest(String requestBody) {
+        private String processGameStartRequest(String requestBody) throws IOException {
             // Implémenter la logique pour traiter la requête de démarrage du jeu
             // Générer et renvoyer la réponse JSON correspondante
             // Assurez-vous de respecter le schéma de réponse indiqué dans l'énoncé
-            return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:9876\", \"message\": \"May the best code win\"}";
+            // Consommer l'API tierce
+            String apiUrl = "https://api.example.com/start";
+            String apiResponse = sendPostRequest(apiUrl, requestBody);
+
+            // Vérifier la réponse de l'API et générer la réponse JSON appropriée
+            if (apiResponse != null && apiResponse.startsWith("SUCCESS")) {
+                String gameId = apiResponse.substring(apiResponse.indexOf(':') + 1).trim();
+                return "{\"id\": \"" + gameId + "\", \"url\": \"http://localhost:9876\", \"message\": \"Game started\"}";
+            } else {
+                return "{\"error\": \"Failed to start the game\"}";
+            }
+            //return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:9876\", \"message\": \"May the best code win\"}";
         }
+
+        private String sendPostRequest(String apiUrl, String requestBody) throws IOException {
+            URL url = new URL(apiUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(true);
+
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] requestBodyBytes = requestBody.getBytes(StandardCharsets.UTF_8);
+                os.write(requestBodyBytes);
+            }
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        response.append(line);
+                    }
+                    return response.toString();
+                }
+            } else {
+                return null;
+            }
+        }
+
     }
 }
+
