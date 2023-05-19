@@ -45,18 +45,14 @@ public class Launcher {
                 sendResponse(exchange, 404, "Not Found");
                 return;
             }
-
             // Récupérer et valider le corps de la requête JSON
             String requestBody = getRequestString(exchange);
             if (requestBody == null) {
                 sendResponse(exchange, 400, "Bad Request");
                 return;
             }
-
-            // Traiter la requête et générer la réponse JSON
+            // Traiter la requête et générer la réponse JSON et l'envoyer
             String responseJson = processGameStartRequest(requestBody);
-
-            // Envoyer la réponse avec le statut Accepted (202)
             sendResponse(exchange, 202, responseJson);
         }
 
