@@ -28,7 +28,7 @@ public class Launcher {
         ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
         server.setExecutor(threadPoolExecutor);
         server.createContext("/ping", new PingHandler());
-        server.createContext("/api/game/start", new ApiGameStartHandler());
+        server.createContext("/api/game/start", new ApiGameStartHandler(port));
         server.start();
         System.out.println("Server started on port " + port);
     }
@@ -37,7 +37,7 @@ public class Launcher {
 class PingHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String response = "Ok";
+        String response = "OK";
         exchange.sendResponseHeaders(200, response.length());
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(response.getBytes());
@@ -46,6 +46,10 @@ class PingHandler implements HttpHandler {
 }
 
 class ApiGameStartHandler implements HttpHandler {
+    private final int port;
+    public ApiGameStartHandler(int port) {
+        this.port = port;
+    }
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         //verifier que la méthode de la requête est POST. Si ce n'est pas le cas, renvoyer une réponse "Not Found" avec un statut HTTP 404.
@@ -101,10 +105,11 @@ class ApiGameStartHandler implements HttpHandler {
                 return "{\"error\": \"Failed to start the game\"}";
             }
             */
-        return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:9876\", \"message\": \"May the best code win\"}";
+        return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:" + this.port + "\", \"message\": \"May the best code win\"}";
     }
+}
 
-    //envoyer requête
+//envoyer requête
     /*
     private String sendPostRequest(String apiUrl, String requestBody) throws IOException {
         URL url = new URL(apiUrl);
@@ -133,6 +138,3 @@ class ApiGameStartHandler implements HttpHandler {
         }
     }
     */
-
-}
-
