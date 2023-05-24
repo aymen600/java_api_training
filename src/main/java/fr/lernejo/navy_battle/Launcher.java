@@ -87,25 +87,25 @@ class ApiGameStartHandler implements HttpHandler {
         }
     }
 
-    //représente la logique de traitement de la requête. Dans cet exemple, on utilise une implémentation factice qui renvoie une réponse JSON fixe.
+    //Reponse (JSON)
     private String processGameStartRequest(String requestBody) throws IOException {
-        // Implémenter la logique pour traiter la requête de démarrage du jeu
-        // Générer et renvoyer la réponse JSON correspondante
-        // Assurez-vous de respecter le schéma de réponse indiqué dans l'énoncé
-        // Consommer l'API tierce
-        String apiUrl = "https://api.example.com/start";
-        String apiResponse = sendPostRequest(apiUrl, requestBody);
+            /*
+            String apiUrl = "https://api.example.com/start";
+            String apiResponse = sendPostRequest(apiUrl, requestBody);
 
-        // Vérifier la réponse de l'API et générer la réponse JSON appropriée
-        if (apiResponse != null && apiResponse.startsWith("SUCCESS")) {
-            String gameId = apiResponse.substring(apiResponse.indexOf(':') + 1).trim();
-            return "{\"id\": \"" + gameId + "\", \"url\": \"http://localhost:9876\", \"message\": \"Game started\"}";
-        } else {
-            return "{\"error\": \"Failed to start the game\"}";
-        }
-        //return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:9876\", \"message\": \"May the best code win\"}";
+            // Vérifier la réponse de l'API et générer la réponse JSON appropriée
+            if (apiResponse != null && apiResponse.startsWith("SUCCESS")) {
+                String gameId = apiResponse.substring(apiResponse.indexOf(':') + 1).trim();
+                return "{\"id\": \"" + gameId + "\", \"url\": \"http://localhost:9876\", \"message\": \"Game started\"}";
+            } else {
+                return "{\"error\": \"Failed to start the game\"}";
+            }
+            */
+        return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:9876\", \"message\": \"May the best code win\"}";
     }
 
+    //envoyer requête
+    /*
     private String sendPostRequest(String apiUrl, String requestBody) throws IOException {
         URL url = new URL(apiUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -132,5 +132,8 @@ class ApiGameStartHandler implements HttpHandler {
             return null;
         }
     }
+    */
+     */
 
 }
+
