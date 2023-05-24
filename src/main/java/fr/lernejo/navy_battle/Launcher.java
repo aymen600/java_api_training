@@ -133,7 +133,6 @@ class ApiGameStartHandler implements HttpHandler {
         }
     }
     */
-     */
 
 }
 
