@@ -108,33 +108,3 @@ class ApiGameStartHandler implements HttpHandler {
         return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:" + this.port + "\", \"message\": \"May the best code win\"}";
     }
 }
-
-//envoyer requête
-    /*
-    private String sendPostRequest(String apiUrl, String requestBody) throws IOException {
-        URL url = new URL(apiUrl);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setDoOutput(true);
-
-        try (OutputStream os = connection.getOutputStream()) {
-            byte[] requestBodyBytes = requestBody.getBytes(StandardCharsets.UTF_8);
-            os.write(requestBodyBytes);
-        }
-
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = br.readLine()) != null) {
-                    response.append(line);
-                }
-                return response.toString();
-            }
-        } else {
-            return null;
-        }
-    }
-    */
