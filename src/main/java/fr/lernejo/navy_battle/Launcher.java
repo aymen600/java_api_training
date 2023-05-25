@@ -33,7 +33,6 @@ public class Launcher {
         System.out.println("Server started on port " + port);
         if(args.length == 2){
             sendMessage(port, args[1]);
-            //sendMessageFire(args[1]);
         }
     }
     public static void sendMessage(int port, String url) throws IOException, InterruptedException {
@@ -46,21 +45,6 @@ public class Launcher {
             .build();
         //HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-    }
-
-    public static void sendMessageFire(String url) throws IOException, InterruptedException {
-        HttpClient httpClient = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url+"/api/game/fire?cell=B2"))
-            .build();
-        //HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        int statusCode = response.statusCode();
-        // Récupérer le corps de la réponse
-        String responseBody = response.body();
-        // Afficher le code de statut et le corps de la réponse
-        System.out.println("Status code: " + statusCode);
-        System.out.println("Response body: " + responseBody);
     }
 }
 
