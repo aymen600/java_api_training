@@ -78,6 +78,7 @@ class ApiGameStartHandler implements HttpHandler {
         String responseJson;
         try {responseJson = processGameStartRequest(requestBody);} catch (InterruptedException e) {throw new RuntimeException(e);}
         try {sendResponse(exchange, 202, responseJson);} catch (InterruptedException e) {throw new RuntimeException(e);}
+        try {sendRequestFire(requestBody);} catch (InterruptedException e) {throw new RuntimeException(e);}
     }
     private String getRequestString(HttpExchange exchange) throws IOException {
         try (InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
@@ -103,6 +104,22 @@ class ApiGameStartHandler implements HttpHandler {
     private String processGameStartRequest(String requestBody) throws IOException, InterruptedException {
         return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:" + this.port + "\", \"message\": \"May the best code win\"}";
     }
+
+    private void sendRequestFire(String requestReceive) throws IOException, InterruptedException {
+        String jsonString = requestReceive.replaceAll("\\s+", "");
+        int urlStartIndex = jsonString.indexOf("\"url\":\"") + 7;
+        int urlEndIndex = jsonString.indexOf("\",", urlStartIndex);
+        String url = jsonString.substring(urlStartIndex, urlEndIndex);
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url+"/api/game/fire?cell=B2"))
+            .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        int statusCode = response.statusCode();
+        String responseBody = response.body();
+        System.out.println("Status code: " + statusCode);
+        System.out.println("Response body: " + responseBody);
+    }
 }
 
 class ApiGameFireHandler implements HttpHandler {
@@ -113,6 +130,7 @@ class ApiGameFireHandler implements HttpHandler {
         }
         String cell = exchange.getRequestURI().getQuery();
         String responseJson = processGameFireRequest(cell);
+        System.out.println("Réponse à envoyé: " + responseJson);
         try {
             sendResponse(exchange, 200, responseJson);
         } catch (InterruptedException e) {
