@@ -33,7 +33,7 @@ public class Launcher {
         System.out.println("Server started on port " + port);
         if(args.length == 2){
             sendMessage(port, args[1]);
-            sendMessageFire(args[1]);
+            //sendMessageFire(args[1]);
         }
     }
     public static void sendMessage(int port, String url) throws IOException, InterruptedException {
@@ -149,7 +149,6 @@ class ApiGameFireHandler implements HttpHandler {
         // réponse factice
         String consequence = "sunk";
         boolean shipLeft = true;
-
         return "{\"consequence\": \"" + consequence + "\", \"shipLeft\": " + shipLeft + "}";
     }
 }
