@@ -28,6 +28,7 @@ public class Launcher {
         server.setExecutor(threadPoolExecutor);
         server.createContext("/ping", new PingHandler());
         server.createContext("/api/game/start", new ApiGameStartHandler(port));
+        server.createContext("/api/game/fire", new ApiGameFireHandler());
         server.start();
         System.out.println("Server started on port " + port);
         if(args.length == 2){
@@ -103,6 +104,40 @@ class ApiGameStartHandler implements HttpHandler {
         return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:" + this.port + "\", \"message\": \"May the best code win\"}";
     }
 }
+
+class ApiGameFireHandler implements HttpHandler {
+    @Override
+    public void handle(HttpExchange exchange) throws IOException {
+        if (!exchange.getRequestMethod().equals("GET")) {
+            try {sendResponse(exchange, 404, "Not Found");} catch (InterruptedException e) {throw new RuntimeException(e);}return;
+        }
+        String cell = exchange.getRequestURI().getQuery();
+        String responseJson = processGameFireRequest(cell);
+        try {
+            sendResponse(exchange, 200, responseJson);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException, InterruptedException {
+        byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "application/json");
+        exchange.sendResponseHeaders(statusCode, responseBytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(responseBytes);
+        }
+    }
+
+    private String processGameFireRequest(String cell) {
+        // réponse factice
+        String consequence = "sunk";
+        boolean shipLeft = true;
+
+        return "{\"consequence\": \"" + consequence + "\", \"shipLeft\": " + shipLeft + "}";
+    }
+}
+
 
 
 
