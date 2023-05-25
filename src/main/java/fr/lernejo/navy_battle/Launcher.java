@@ -10,8 +10,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.net.URL;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -19,10 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.io.BufferedReader;
-import java.util.concurrent.TimeUnit;
 
 public class Launcher {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         int port = Integer.parseInt(args[0]);
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
@@ -31,6 +30,20 @@ public class Launcher {
         server.createContext("/api/game/start", new ApiGameStartHandler(port));
         server.start();
         System.out.println("Server started on port " + port);
+        if(args.length == 2){
+            sendMessage(port, args[1]);
+        }
+    }
+    public static void sendMessage(int port, String url) throws IOException, InterruptedException {
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url + "/api/game/start"))
+            .setHeader("Accept", "application/json")
+            .setHeader("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString("{\"id\":\"1\", \"url\":\"http://localhost:" + port + "\", \"message\":\"hello\"}"))
+            .build();
+        //HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
 }
 
@@ -52,23 +65,19 @@ class ApiGameStartHandler implements HttpHandler {
     }
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        //verifier que la méthode de la requête est POST. Si ce n'est pas le cas, renvoyer une réponse "Not Found" avec un statut HTTP 404.
         if (!exchange.getRequestMethod().equals("POST")) {
-            sendResponse(exchange, 404, "Not Found");
+            try {
+                sendResponse(exchange, 404, "Not Found");
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             return;
         }
-        // Récupérer et valider le corps de la requête JSON
         String requestBody = getRequestString(exchange);
-        if (requestBody == null) {
-            sendResponse(exchange, 400, "Bad Request");
-            return;
-        }
-        // Traiter la requête et générer la réponse JSON et l'envoyer
-        String responseJson = processGameStartRequest(requestBody);
-        sendResponse(exchange, 202, responseJson);
+        String responseJson;
+        try {responseJson = processGameStartRequest(requestBody);} catch (InterruptedException e) {throw new RuntimeException(e);}
+        try {sendResponse(exchange, 202, responseJson);} catch (InterruptedException e) {throw new RuntimeException(e);}
     }
-
-    //recupere et valide le corps de la requête JSON
     private String getRequestString(HttpExchange exchange) throws IOException {
         try (InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
              BufferedReader br = new BufferedReader(isr)) {
@@ -77,34 +86,23 @@ class ApiGameStartHandler implements HttpHandler {
             while ((line = br.readLine()) != null) {
                 requestBody.append(line);
             }
+            System.out.println(requestBody.toString());
             return requestBody.toString();
         }
     }
-
-    //envoie réponse JSON
-    private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
+    private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException, InterruptedException {
         byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json");
         exchange.sendResponseHeaders(statusCode, responseBytes.length);
         try (OutputStream os = exchange.getResponseBody()) {
+            //System.out.println(responseBytes);
             os.write(responseBytes);
         }
     }
-
-    //Reponse (JSON)
-    private String processGameStartRequest(String requestBody) throws IOException {
-            /*
-            String apiUrl = "https://api.example.com/start";
-            String apiResponse = sendPostRequest(apiUrl, requestBody);
-
-            // Vérifier la réponse de l'API et générer la réponse JSON appropriée
-            if (apiResponse != null && apiResponse.startsWith("SUCCESS")) {
-                String gameId = apiResponse.substring(apiResponse.indexOf(':') + 1).trim();
-                return "{\"id\": \"" + gameId + "\", \"url\": \"http://localhost:9876\", \"message\": \"Game started\"}";
-            } else {
-                return "{\"error\": \"Failed to start the game\"}";
-            }
-            */
+    private String processGameStartRequest(String requestBody) throws IOException, InterruptedException {
         return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:" + this.port + "\", \"message\": \"May the best code win\"}";
     }
 }
+
+
+
