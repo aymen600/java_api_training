@@ -113,6 +113,7 @@ class ApiGameStartHandler implements HttpHandler {
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(url+"/api/game/fire?cell=B2"))
+            .setHeader("Accept", "application/json")
             .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         int statusCode = response.statusCode();
