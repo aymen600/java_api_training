@@ -210,7 +210,7 @@ class ApiGameFireHandler implements HttpHandler {
         System.out.println("url : "+url);
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url+"/api/game/fire?cell="+index))
+            .uri(URI.create(url+"/api/game/fire?cell="+valeurTiree))
             .setHeader("Accept", "application/json")
             .setHeader("Origin", String.valueOf(this.port))
             .setHeader("nbRequest", String.valueOf(nb_request))
