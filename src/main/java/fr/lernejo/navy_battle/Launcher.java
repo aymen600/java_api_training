@@ -15,6 +15,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.io.BufferedReader;
@@ -200,12 +201,16 @@ class ApiGameFireHandler implements HttpHandler {
     }
 
     public void sendRequestFire2(String Origin, int nb_request) throws IOException, InterruptedException {
+        String[] tableau = {"B2", "C3", "A2", "D3", "D4", "D8", "A5", "E3"};
+        Random random = new Random();
+        int index = random.nextInt(tableau.length);
+        String valeurTiree = tableau[index];
         System.out.println("fonction parametre :"+ Origin);
         String url = "http://localhost:"+Origin;
         System.out.println("url : "+url);
         HttpClient httpClient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(url+"/api/game/fire?cell=B2"))
+            .uri(URI.create(url+"/api/game/fire?cell="+index))
             .setHeader("Accept", "application/json")
             .setHeader("Origin", String.valueOf(this.port))
             .setHeader("nbRequest", String.valueOf(nb_request))
