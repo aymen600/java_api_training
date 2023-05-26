@@ -1,6 +1,5 @@
 package fr.lernejo;
 
-import org.junit.Test;
 import org.junit.jupiter.api.*;
 
 import static fr.lernejo.Sample.Operation.ADD;
