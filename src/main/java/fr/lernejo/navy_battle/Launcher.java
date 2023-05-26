@@ -5,12 +5,11 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import javax.lang.model.util.Elements;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.URL;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -19,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.io.BufferedReader;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Launcher {
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -28,7 +28,7 @@ public class Launcher {
         server.setExecutor(threadPoolExecutor);
         server.createContext("/ping", new PingHandler());
         server.createContext("/api/game/start", new ApiGameStartHandler(port));
-        server.createContext("/api/game/fire", new ApiGameFireHandler());
+        server.createContext("/api/game/fire", new ApiGameFireHandler(port));
         server.start();
         System.out.println("Server started on port " + port);
         if(args.length == 2){
@@ -44,6 +44,7 @@ public class Launcher {
             .POST(HttpRequest.BodyPublishers.ofString("{\"id\":\"1\", \"url\":\"http://localhost:" + port + "\", \"message\":\"hello\"}"))
             .build();
         //HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Requete à envoyé : "+ "{\"id\":\"1\", \"url\":\"http://localhost:" + port + "\", \"message\":\"hello\"}");
         httpClient.send(request, HttpResponse.BodyHandlers.ofString());
     }
 }
@@ -78,9 +79,10 @@ class ApiGameStartHandler implements HttpHandler {
         String responseJson;
         try {responseJson = processGameStartRequest(requestBody);} catch (InterruptedException e) {throw new RuntimeException(e);}
         try {sendResponse(exchange, 202, responseJson);} catch (InterruptedException e) {throw new RuntimeException(e);}
+        System.out.println("Réponse à envoyé : "+ responseJson);
         try {sendRequestFire(requestBody);} catch (InterruptedException e) {throw new RuntimeException(e);}
     }
-    private String getRequestString(HttpExchange exchange) throws IOException {
+    static String getRequestString(HttpExchange exchange) throws IOException {
         try (InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
              BufferedReader br = new BufferedReader(isr)) {
             StringBuilder requestBody = new StringBuilder();
@@ -88,7 +90,7 @@ class ApiGameStartHandler implements HttpHandler {
             while ((line = br.readLine()) != null) {
                 requestBody.append(line);
             }
-            System.out.println(requestBody.toString());
+            System.out.println("Requete recu : " + requestBody.toString());
             return requestBody.toString();
         }
     }
@@ -101,11 +103,12 @@ class ApiGameStartHandler implements HttpHandler {
             os.write(responseBytes);
         }
     }
-    private String processGameStartRequest(String requestBody) throws IOException, InterruptedException {
+    String processGameStartRequest(String requestBody) throws IOException, InterruptedException {
         return "{\"id\": \"2aca7611-0ae4-49f3-bf63-75bef4769028\", \"url\": \"http://localhost:" + this.port + "\", \"message\": \"May the best code win\"}";
     }
 
-    private void sendRequestFire(String requestReceive) throws IOException, InterruptedException {
+    public void sendRequestFire(String requestReceive) throws IOException, InterruptedException {
+        System.out.println("fonction parametre :"+ requestReceive);
         String jsonString = requestReceive.replaceAll("\\s+", "");
         int urlStartIndex = jsonString.indexOf("\"url\":\"") + 7;
         int urlEndIndex = jsonString.indexOf("\",", urlStartIndex);
@@ -114,21 +117,30 @@ class ApiGameStartHandler implements HttpHandler {
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(url+"/api/game/fire?cell=B2"))
             .setHeader("Accept", "application/json")
+            .setHeader("Origin", String.valueOf(this.port))
+            .setHeader("nbRequest", String.valueOf(1))
             .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Requete envoyé en GET: "+ "cell=B2");
         int statusCode = response.statusCode();
         String responseBody = response.body();
-        System.out.println("Status code: " + statusCode);
-        System.out.println("Response body: " + responseBody);
+        //System.out.println("Status code: " + statusCode);
+        System.out.println("Response recu: " + responseBody);
     }
 }
 
 class ApiGameFireHandler implements HttpHandler {
+    private final int port;
+    public ApiGameFireHandler(int port){
+        this.port = port;
+    }
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         if (!exchange.getRequestMethod().equals("GET")) {
             try {sendResponse(exchange, 404, "Not Found");} catch (InterruptedException e) {throw new RuntimeException(e);}return;
         }
+        //int clientPort = exchange.getRemoteAddress().getPort();
+        System.out.println("request fire receive from : " +this.port);
         String cell = exchange.getRequestURI().getQuery();
         String responseJson = processGameFireRequest(cell);
         System.out.println("Réponse à envoyé: " + responseJson);
@@ -137,7 +149,18 @@ class ApiGameFireHandler implements HttpHandler {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        String originHeader = exchange.getRequestHeaders().getFirst("Origin");
+        String nb_request = exchange.getRequestHeaders().getFirst("nbRequest");
+        System.out.println("Valeur de l'en-tête Origin : " + originHeader);
+        System.out.println("Valeur de l'en-tête nbRequest : " + nb_request);
+        int int_nb_request = Integer.parseInt(nb_request)+1;
+        //String requestBody = getRequestGet(exchange);
+        //System.out.println(requestBody);
+        //int requestPort = getPort(exchange);
+        if(int_nb_request < 7){
+            try {sendRequestFire2(originHeader, int_nb_request);} catch (InterruptedException e) {throw new RuntimeException(e);}}
     }
+
 
     private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException, InterruptedException {
         byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
@@ -148,12 +171,53 @@ class ApiGameFireHandler implements HttpHandler {
         }
     }
 
+    public static String getRequestGet(HttpExchange exchange) throws IOException {
+        if ("GET".equals(exchange.getRequestMethod())) {
+            String query = exchange.getRequestURI().getQuery();
+            System.out.println("GET request received. Query: " + query);
+            return query;
+        }
+        return null;
+    }
+    public int getPort(HttpExchange exchange) throws IOException {
+        if ("GET".equals(exchange.getRequestMethod())) {
+            //String clientAddress = exchange.getRemoteAddress().getAddress().toString();
+            //int clientPort = exchange.getRemoteAddress().getPort();
+            //int serverPort = this.server.getAddress().getPort();
+            int serverPort = exchange.getLocalAddress().getPort();
+            System.out.println("GET request received from port: " + serverPort);
+            return serverPort;
+        }
+        return 0;
+    }
+
+
     private String processGameFireRequest(String cell) {
         // réponse factice
         String consequence = "sunk";
         boolean shipLeft = true;
         return "{\"consequence\": \"" + consequence + "\", \"shipLeft\": " + shipLeft + "}";
     }
+
+    public void sendRequestFire2(String Origin, int nb_request) throws IOException, InterruptedException {
+        System.out.println("fonction parametre :"+ Origin);
+        String url = "http://localhost:"+Origin;
+        System.out.println("url : "+url);
+        HttpClient httpClient = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url+"/api/game/fire?cell=B2"))
+            .setHeader("Accept", "application/json")
+            .setHeader("Origin", String.valueOf(this.port))
+            .setHeader("nbRequest", String.valueOf(nb_request))
+            .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Requete envoyé to"+url+ "en GET: "+ "cell=B2");
+        int statusCode = response.statusCode();
+        String responseBody = response.body();
+        //System.out.println("Status code: " + statusCode);
+        System.out.println("Response recu: " + responseBody);
+    }
+
 }
 
 
