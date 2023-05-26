@@ -142,6 +142,7 @@ class ApiGameFireHandler implements HttpHandler {
         String responseJson = processGameFireRequest(cell);
         System.out.println("Réponse à envoyé: " + responseJson);
         try {sendResponse(exchange, 200, responseJson);} catch (InterruptedException e) {throw new RuntimeException(e);}
+        String originHeader = exchange.getRequestHeaders().getFirst("Origin");
         String nb_request = exchange.getRequestHeaders().getFirst("nbRequest");
         int int_nb_request = Integer.parseInt(nb_request)+1;
         if(int_nb_request < 7){try {sendRequestFire2(originHeader, int_nb_request);} catch (InterruptedException e) {throw new RuntimeException(e);}}
